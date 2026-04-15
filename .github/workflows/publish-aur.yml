@@ -1,0 +1,53 @@
+name: Publish to AUR
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 147.0.0). Defaults to the latest release tag."
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ -n "${{ inputs.version }}" ]]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp pkgver + reset pkgrel
+        run: |
+          ver="${{ steps.version.outputs.version }}"
+          sed -i "s/^pkgver=.*/pkgver=${ver}/" packaging/aur/PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/"       packaging/aur/PKGBUILD
+
+      - name: Deploy to AUR
+        # v4.x fixed the entry-point's bash --command bug that v2.x / v3.x hit.
+        # No floating v4 tag exists — pin to the patch version.
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.2
+        with:
+          pkgname: zeed-bin
+          pkgbuild: packaging/aur/PKGBUILD
+          assets: |
+            packaging/aur/zeed.sh
+            packaging/aur/zeed.desktop
+          commit_username: zeed-release-bot
+          commit_email: release@efg-technologies.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Release ${{ steps.version.outputs.version }}"
+          ssh_keyscan_types: "rsa,ed25519"
+          updpkgsums: true
+          test: true
