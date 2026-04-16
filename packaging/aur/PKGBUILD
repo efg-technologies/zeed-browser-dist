@@ -37,7 +37,9 @@ source=(
   'zeed.sh'
   'zeed.desktop'
 )
-# sha256sums are refreshed on each release by the GitHub Action via updpkgsums.
+# sha256sums — committed in this repo and verified by the GitHub Action
+# against the released tarball before deployment. Use 'SKIP' only for the
+# very first publish of a new pkgver; the action's updpkgsums will fill it.
 sha256sums_x86_64=('a09fda2bc4858ff825d1d356edb25cd9206173b0e3047edd2af6c8617928efb4')
 sha256sums=(
   'SKIP'

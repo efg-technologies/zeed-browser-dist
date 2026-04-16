@@ -39,6 +39,49 @@ jobs:
           sed -i "s/^pkgver=.*/pkgver=${ver}/" packaging/aur/PKGBUILD
           sed -i "s/^pkgrel=.*/pkgrel=${rel}/"  packaging/aur/PKGBUILD
 
+      - name: Pre-flight — committed sha must match GitHub tarball
+        # Once a tarball is uploaded, its content must be immutable. If the
+        # committed PKGBUILD sha doesn't match the downloaded tarball, it
+        # means someone replaced the GitHub asset (breaks old users' makepkg
+        # cache) or forgot to update sha after a new upload. Fail loudly.
+        # Exception: 'SKIP' means first publish — updpkgsums will fill it.
+        run: |
+          ver="${{ steps.version.outputs.version }}"
+          committed_sha="$(awk -F"'" '/^sha256sums_x86_64=/{print $2}' packaging/aur/PKGBUILD)"
+
+          if [[ -z "$committed_sha" || "$committed_sha" == "SKIP" ]]; then
+            echo "No committed sha256 yet (first publish of v${ver}). updpkgsums will populate it."
+            exit 0
+          fi
+
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${ver}/zeed-${ver}-linux-x86_64.tar.xz"
+          echo "Downloading $url"
+          curl -sL --fail "$url" -o /tmp/zeed-check.tar.xz || {
+            echo "::error::Failed to download $url"
+            exit 1
+          }
+          actual_sha="$(sha256sum /tmp/zeed-check.tar.xz | awk '{print $1}')"
+
+          if [[ "$committed_sha" != "$actual_sha" ]]; then
+            echo "::error::sha256 mismatch for v${ver}"
+            echo "  committed:  $committed_sha  (packaging/aur/PKGBUILD)"
+            echo "  downloaded: $actual_sha      (GitHub Release)"
+            echo ""
+            echo "Possible causes:"
+            echo "  1. GitHub release asset was re-uploaded with different content"
+            echo "     — this breaks old users' makepkg cache."
+            echo "  2. PKGBUILD was not updated for a new tarball."
+            echo "  3. Non-deterministic build produced different bytes."
+            echo ""
+            echo "Resolution:"
+            echo "  - Do NOT proceed by forcing a re-publish of the same version."
+            echo "  - Either bump pkgver (new version), or restore the original tarball."
+            exit 1
+          fi
+
+          echo "✓ Committed sha matches downloaded tarball"
+          echo "  sha256: $actual_sha"
+
       - name: Deploy to AUR
         # v4.x fixed the entry-point's bash --command bug that v2.x / v3.x hit.
         # No floating v4 tag exists — pin to the patch version.
