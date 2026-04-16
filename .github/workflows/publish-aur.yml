@@ -8,6 +8,10 @@ on:
       version:
         description: "Version to publish (e.g. 147.0.0). Defaults to the latest release tag."
         required: false
+      pkgrel:
+        description: "Package release number (default: 1). Bump when re-releasing the same version."
+        required: false
+        default: "1"
 
 jobs:
   publish:
@@ -28,11 +32,12 @@ jobs:
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Stamp pkgver + reset pkgrel
+      - name: Stamp pkgver + pkgrel
         run: |
           ver="${{ steps.version.outputs.version }}"
+          rel="${{ inputs.pkgrel || '1' }}"
           sed -i "s/^pkgver=.*/pkgver=${ver}/" packaging/aur/PKGBUILD
-          sed -i "s/^pkgrel=.*/pkgrel=1/"       packaging/aur/PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=${rel}/"  packaging/aur/PKGBUILD
 
       - name: Deploy to AUR
         # v4.x fixed the entry-point's bash --command bug that v2.x / v3.x hit.
