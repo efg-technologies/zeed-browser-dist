@@ -33,11 +33,20 @@ jobs:
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Stamp pkgver + pkgrel
+        # If pkgver changes (new release), reset sha256sums_x86_64 to SKIP so
+        # updpkgsums repopulates from the freshly-uploaded tarball. Otherwise
+        # Pre-flight compares the NEW tarball's sha against the PREVIOUS
+        # version's committed sha and false-fails.
         run: |
           ver="${{ steps.version.outputs.version }}"
           rel="${{ inputs.pkgrel || '1' }}"
+          current_ver="$(awk -F'=' '/^pkgver=/{print $2}' packaging/aur/PKGBUILD)"
           sed -i "s/^pkgver=.*/pkgver=${ver}/" packaging/aur/PKGBUILD
           sed -i "s/^pkgrel=.*/pkgrel=${rel}/"  packaging/aur/PKGBUILD
+          if [[ "$current_ver" != "$ver" ]]; then
+            echo "pkgver changed ($current_ver → $ver) — resetting sha256sums_x86_64 to SKIP"
+            sed -i "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('SKIP')/" packaging/aur/PKGBUILD
+          fi
 
       - name: Pre-flight — committed sha must match GitHub tarball
         # Once a tarball is uploaded, its content must be immutable. If the
