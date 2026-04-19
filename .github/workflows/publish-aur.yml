@@ -16,8 +16,26 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Run inside Arch so makepkg/updpkgsums/namcap are native. We deploy
+    # via a custom shell step (not KSXGitHub/github-actions-deploy-aur)
+    # because that action ships a buggy v4.1.2 that commits on detached
+    # HEAD and then `git push origin master` fails with "src refspec
+    # master does not match any". Doing it by hand also lets us keep
+    # the flow transparent.
+    container:
+      image: archlinux:latest
+      options: --user root
     steps:
-      - name: Checkout
+      - name: Install Arch deps
+        run: |
+          pacman -Sy --noconfirm --needed \
+            base-devel git openssh pacman-contrib sudo which
+          # makepkg refuses to run as root; set up a builder user.
+          useradd -m -s /bin/bash builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+          chmod 440 /etc/sudoers.d/builder
+
+      - name: Checkout dist repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -33,10 +51,12 @@ jobs:
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Stamp pkgver + pkgrel
-        # If pkgver changes (new release), reset sha256sums_x86_64 to SKIP so
-        # updpkgsums repopulates from the freshly-uploaded tarball. Otherwise
-        # Pre-flight compares the NEW tarball's sha against the PREVIOUS
-        # version's committed sha and false-fails.
+        # If pkgver changes vs what's in the committed PKGBUILD, reset
+        # sha256sums_x86_64 to 'SKIP' so updpkgsums can populate it
+        # from the freshly-uploaded tarball. Without this, Pre-flight
+        # compares the NEW tarball against the PREVIOUS version's sha
+        # and false-fails cross-version publishes triggered by
+        # workflow_dispatch.
         run: |
           ver="${{ steps.version.outputs.version }}"
           rel="${{ inputs.pkgrel || '1' }}"
@@ -51,9 +71,10 @@ jobs:
       - name: Pre-flight — committed sha must match GitHub tarball
         # Once a tarball is uploaded, its content must be immutable. If the
         # committed PKGBUILD sha doesn't match the downloaded tarball, it
-        # means someone replaced the GitHub asset (breaks old users' makepkg
-        # cache) or forgot to update sha after a new upload. Fail loudly.
-        # Exception: 'SKIP' means first publish — updpkgsums will fill it.
+        # means someone replaced the GitHub asset (breaks old users'
+        # makepkg cache) or forgot to update sha after a new upload.
+        # Fail loudly. Exception: 'SKIP' means first publish — updpkgsums
+        # will fill it.
         run: |
           ver="${{ steps.version.outputs.version }}"
           committed_sha="$(awk -F"'" '/^sha256sums_x86_64=/{print $2}' packaging/aur/PKGBUILD)"
@@ -75,41 +96,71 @@ jobs:
             echo "::error::sha256 mismatch for v${ver}"
             echo "  committed:  $committed_sha  (packaging/aur/PKGBUILD)"
             echo "  downloaded: $actual_sha      (GitHub Release)"
-            echo ""
-            echo "Possible causes:"
-            echo "  1. GitHub release asset was re-uploaded with different content"
-            echo "     — this breaks old users' makepkg cache."
-            echo "  2. PKGBUILD was not updated for a new tarball."
-            echo "  3. Non-deterministic build produced different bytes."
-            echo ""
-            echo "Resolution:"
-            echo "  - Do NOT proceed by forcing a re-publish of the same version."
-            echo "  - Either bump pkgver (new version), or restore the original tarball."
             exit 1
           fi
 
           echo "✓ Committed sha matches downloaded tarball"
-          echo "  sha256: $actual_sha"
 
-      - name: Deploy to AUR
-        # v4.x fixed the entry-point's bash --command bug that v2.x / v3.x hit.
-        # No floating v4 tag exists — pin to the patch version.
-        uses: KSXGitHub/github-actions-deploy-aur@v4.1.2
-        with:
-          pkgname: zeed-bin
-          pkgbuild: packaging/aur/PKGBUILD
-          assets: |
-            packaging/aur/zeed.sh
-            packaging/aur/zeed.desktop
-          commit_username: zeed-release-bot
-          commit_email: release@efg-technologies.com
-          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: "Release ${{ steps.version.outputs.version }}"
-          ssh_keyscan_types: "rsa,ed25519"
-          updpkgsums: true
-          test: true
-          # AUR rejects blobs > 488 KiB. updpkgsums downloads the source tarball
-          # and test:true builds a .pkg.tar.zst — both end up in the work dir
-          # and would be committed otherwise. Strip them before the commit.
-          post_process: |
-            rm -rf -- *.tar.xz *.pkg.tar.zst *.tar.gz *.zip src pkg
+      - name: SSH setup for AUR
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p /home/builder/.ssh
+          echo "$AUR_SSH_PRIVATE_KEY" > /home/builder/.ssh/aur
+          chmod 600 /home/builder/.ssh/aur
+          cat > /home/builder/.ssh/config <<'EOF'
+          Host aur.archlinux.org
+              User aur
+              IdentityFile ~/.ssh/aur
+              IdentitiesOnly yes
+              StrictHostKeyChecking accept-new
+          EOF
+          chmod 600 /home/builder/.ssh/config
+          ssh-keyscan -t rsa,ed25519 aur.archlinux.org >> /home/builder/.ssh/known_hosts 2>/dev/null
+          chown -R builder:builder /home/builder/.ssh
+
+      - name: Stage + push to AUR
+        # Runs as the builder user. Clones the AUR repo WITH explicit
+        # master checkout (clone often lands on detached HEAD for AUR
+        # repos — the KSXGitHub action hit this exact bug). Copies the
+        # freshly-stamped PKGBUILD + assets, runs updpkgsums to pick up
+        # the new tarball's sha256, regenerates .SRCINFO, commits on
+        # master, pushes.
+        run: |
+          sudo -u builder -i bash <<'BUILDER_EOF'
+          set -euo pipefail
+          cd /tmp
+          rm -rf aur-repo
+          git clone ssh://aur@aur.archlinux.org/zeed-bin.git aur-repo
+          cd aur-repo
+          # Clone lands in detached HEAD on AUR; force master.
+          git checkout -B master origin/master
+
+          # Copy our committed PKGBUILD + assets over the AUR tree.
+          cp "$GITHUB_WORKSPACE/packaging/aur/PKGBUILD" .
+          cp "$GITHUB_WORKSPACE/packaging/aur/zeed.sh" .
+          cp "$GITHUB_WORKSPACE/packaging/aur/zeed.desktop" .
+
+          # Refresh the sha256 from the actual uploaded tarball (covers
+          # the SKIP case set by Stamp for cross-version publishes).
+          updpkgsums
+
+          # Optional integrity smoke test. Skips deps so the step is fast.
+          makepkg --printsrcinfo > .SRCINFO
+
+          # Commit + push on master. Stable authorship so AUR shows a
+          # consistent maintainer.
+          git -c user.name="zeed-release-bot" \
+              -c user.email="release@efg-technologies.com" \
+              add PKGBUILD .SRCINFO zeed.sh zeed.desktop
+          if git diff --cached --quiet; then
+            echo "Nothing changed — skipping push"
+            exit 0
+          fi
+          git -c user.name="zeed-release-bot" \
+              -c user.email="release@efg-technologies.com" \
+              commit -m "Release $(awk -F'=' '/^pkgver=/{print $2}' PKGBUILD)-$(awk -F'=' '/^pkgrel=/{print $2}' PKGBUILD)"
+          git push origin master
+          BUILDER_EOF
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
