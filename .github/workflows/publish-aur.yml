@@ -119,13 +119,25 @@ jobs:
           ssh-keyscan -t rsa,ed25519 aur.archlinux.org >> /home/builder/.ssh/known_hosts 2>/dev/null
           chown -R builder:builder /home/builder/.ssh
 
-      - name: Stage + push to AUR
-        # Runs as the builder user. Clones the AUR repo WITH explicit
-        # master checkout (clone often lands on detached HEAD for AUR
-        # repos — the KSXGitHub action hit this exact bug). Copies the
-        # freshly-stamped PKGBUILD + assets, runs updpkgsums to pick up
-        # the new tarball's sha256, regenerates .SRCINFO, commits on
-        # master, pushes.
+      - name: Stage files for builder
+        # Copy the stamped PKGBUILD + assets to a world-readable staging
+        # dir that the builder user can reach without going through
+        # GITHUB_WORKSPACE (which has root-only perms inside the
+        # container).
+        run: |
+          mkdir -p /tmp/staging
+          cp packaging/aur/PKGBUILD /tmp/staging/
+          cp packaging/aur/zeed.sh /tmp/staging/
+          cp packaging/aur/zeed.desktop /tmp/staging/
+          chmod 644 /tmp/staging/*
+          chown -R builder:builder /tmp/staging
+
+      - name: Push to AUR (as builder)
+        # Clone the AUR repo, force-checkout master (clone often lands in
+        # detached HEAD — this is the exact bug the KSXGitHub action
+        # couldn't handle). Swap in the staged files, run updpkgsums to
+        # refresh the sha from the actually-uploaded tarball, regenerate
+        # .SRCINFO, commit on master, push.
         run: |
           sudo -u builder -i bash <<'BUILDER_EOF'
           set -euo pipefail
@@ -133,23 +145,15 @@ jobs:
           rm -rf aur-repo
           git clone ssh://aur@aur.archlinux.org/zeed-bin.git aur-repo
           cd aur-repo
-          # Clone lands in detached HEAD on AUR; force master.
           git checkout -B master origin/master
 
-          # Copy our committed PKGBUILD + assets over the AUR tree.
-          cp "$GITHUB_WORKSPACE/packaging/aur/PKGBUILD" .
-          cp "$GITHUB_WORKSPACE/packaging/aur/zeed.sh" .
-          cp "$GITHUB_WORKSPACE/packaging/aur/zeed.desktop" .
+          cp /tmp/staging/PKGBUILD .
+          cp /tmp/staging/zeed.sh .
+          cp /tmp/staging/zeed.desktop .
 
-          # Refresh the sha256 from the actual uploaded tarball (covers
-          # the SKIP case set by Stamp for cross-version publishes).
           updpkgsums
-
-          # Optional integrity smoke test. Skips deps so the step is fast.
           makepkg --printsrcinfo > .SRCINFO
 
-          # Commit + push on master. Stable authorship so AUR shows a
-          # consistent maintainer.
           git -c user.name="zeed-release-bot" \
               -c user.email="release@efg-technologies.com" \
               add PKGBUILD .SRCINFO zeed.sh zeed.desktop
@@ -157,10 +161,10 @@ jobs:
             echo "Nothing changed — skipping push"
             exit 0
           fi
+          pkgver="$(awk -F'=' '/^pkgver=/{print $2}' PKGBUILD)"
+          pkgrel="$(awk -F'=' '/^pkgrel=/{print $2}' PKGBUILD)"
           git -c user.name="zeed-release-bot" \
               -c user.email="release@efg-technologies.com" \
-              commit -m "Release $(awk -F'=' '/^pkgver=/{print $2}' PKGBUILD)-$(awk -F'=' '/^pkgrel=/{print $2}' PKGBUILD)"
+              commit -m "Release ${pkgver}-${pkgrel}"
           git push origin master
           BUILDER_EOF
-        env:
-          GITHUB_WORKSPACE: ${{ github.workspace }}
