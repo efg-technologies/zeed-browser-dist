@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+# Update desktop / mime / icon caches. Ignore failures on minimal systems.
+if [ -x /usr/bin/update-desktop-database ]; then
+  update-desktop-database -q /usr/share/applications || true
+fi
+if [ -x /usr/bin/update-mime-database ]; then
+  update-mime-database /usr/share/mime || true
+fi
+if [ -x /usr/bin/gtk-update-icon-cache ]; then
+  gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
+fi
+
+# Chromium sandbox needs user-namespace capability on kernels without
+# unprivileged_userns_clone. Brave / Chromium do the identical chmod.
+if [ -f /opt/zeed/chrome_sandbox ]; then
+  chmod 4755 /opt/zeed/chrome_sandbox || true
+fi
+
+exit 0
