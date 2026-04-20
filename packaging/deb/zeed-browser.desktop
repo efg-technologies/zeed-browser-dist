@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Zeed Browser
+GenericName=Web Browser
+Comment=AI browser that thinks and acts with you
+Exec=/usr/bin/zeed %U
+Terminal=false
+Icon=zeed-browser
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupNotify=true
+StartupWMClass=Zeed
