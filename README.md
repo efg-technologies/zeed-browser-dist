@@ -1,5 +1,7 @@
 # Zeed Browser — AI Browser for Linux
 
+English | [日本語](README.ja.md)
+
 [Zeed](https://zeed.run) is a Chromium-based AI browser that reasons over your
 tabs, memory, and reading context. **Linux-first**: while most AI browsers
 (Comet, Atlas, Dia) ship Mac-first, Zeed ships native Linux builds as its
