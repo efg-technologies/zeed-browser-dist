@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>run.zeed.Browser</id>
+  <launchable type="desktop-id">run.zeed.Browser.desktop</launchable>
+  <name>Zeed Browser</name>
+  <summary>Browse the web with a bundled AI assistant</summary>
+  <developer id="com.efg-technologies">
+    <name>EFG Technologies</name>
+  </developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary</project_license>
+  <url type="homepage">https://zeed.run</url>
+  <url type="bugtracker">https://github.com/efg-technologies/zeed-browser-dist/issues</url>
+  <description>
+    <p>
+      Zeed is a Chromium-based web browser with a bundled AI assistant.
+      The assistant lives in a sidebar, can read the page you are on, and
+      helps you summarize, search, and act on what you see — without
+      sending your browsing data anywhere you have not approved.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Built-in AI sidebar (summarize, ask about the current page)</li>
+      <li>Chromium engine — your extensions and sites just work</li>
+      <li>Privacy-first telemetry: opt-in, allowlisted, inspectable</li>
+    </ul>
+  </description>
+  <branding>
+    <color type="primary" scheme_preference="light">#b99aff</color>
+    <color type="primary" scheme_preference="dark">#1a1a1f</color>
+  </branding>
+  <screenshots>
+    <screenshot type="default">
+      <!-- TODO(flathub-submit): replace with a real in-app screenshot
+           (1280x720+ PNG) hosted at a stable URL before submitting. -->
+      <image>https://zeed.run/og-image.png</image>
+      <caption>Zeed Browser with the AI sidebar open</caption>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="147.0.7727.55.53" date="2026-06-08"/>
+  </releases>
+</component>

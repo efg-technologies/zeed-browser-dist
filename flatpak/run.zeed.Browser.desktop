@@ -1,0 +1,26 @@
+[Desktop Entry]
+Version=1.0
+Name=Zeed Browser
+GenericName=Web Browser
+GenericName[ja]=ウェブブラウザ
+Comment=Browse the web with a bundled AI assistant
+Comment[ja]=AI アシスタント内蔵のウェブブラウザ
+Exec=zeed %U
+Icon=run.zeed.Browser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+StartupNotify=true
+StartupWMClass=zeed-browser
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;application/pdf;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/mailto;x-scheme-handler/webcal;
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Name[ja]=新しいウィンドウ
+Exec=zeed --new-window
+
+[Desktop Action new-private-window]
+Name=New Incognito Window
+Name[ja]=新しいシークレット ウィンドウ
+Exec=zeed --incognito
