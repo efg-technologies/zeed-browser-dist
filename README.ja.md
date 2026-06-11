@@ -61,7 +61,7 @@ brew install --cask efg-technologies/zeed/zeed
   デスクトップエントリ。ここが正で、リリースごとに
   [AUR](https://aur.archlinux.org/packages/zeed-bin) へ自動 push されます。
 - `packaging/deb/` — `.deb` パッケージング (control テンプレート、
-  メンテナスクリプト、デスクトップエントリ)。
+  メンテナスクリプト、ランチャー、デスクトップエントリ)。
 - `flatpak/` — Flathub 対応の Flatpak マニフェスト + AppStream メタデータ。
 - `.github/workflows/publish-aur.yml` — リリースごとに AUR を更新する CI。
 - `.github/workflows/publish-deb.yml` — `.deb` をビルドしてリリースに添付する CI。

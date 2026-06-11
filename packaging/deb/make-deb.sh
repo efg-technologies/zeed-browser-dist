@@ -57,8 +57,11 @@ elif [[ -f "$stage/opt/zeed/product_logo_128.png" ]]; then
      "$stage/usr/share/icons/hicolor/128x128/apps/zeed-browser.png"
 fi
 
-# /usr/bin/zeed → /opt/zeed/zeed (relative symlink for relocatability)
-ln -sf ../../opt/zeed/zeed "$stage/usr/bin/zeed"
+# /usr/bin/zeed-browser launcher wrapper (zeed-flags.conf, bundled
+# zeed_ai extension autoload, TreesInViz workaround — same behavior as
+# the AUR package), plus /usr/bin/zeed convenience symlink.
+install -m 0755 "$script_dir/zeed.sh" "$stage/usr/bin/zeed-browser"
+ln -sf zeed-browser "$stage/usr/bin/zeed"
 
 # Desktop entry
 cp "$script_dir/zeed-browser.desktop" \

@@ -60,7 +60,7 @@ frequently).
   AUR package. Source of truth; auto-pushed to
   [AUR](https://aur.archlinux.org/packages/zeed-bin) on release.
 - `packaging/deb/` — `.deb` packaging (control template, maintainer scripts,
-  desktop entry).
+  launcher, desktop entry).
 - `flatpak/` — Flathub-ready Flatpak manifest + AppStream metadata.
 - `.github/workflows/publish-aur.yml` — CI that updates AUR on every release.
 - `.github/workflows/publish-deb.yml` — CI that builds the `.deb` and attaches
