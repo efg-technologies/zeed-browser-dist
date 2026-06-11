@@ -50,8 +50,10 @@ Flathub への登録は準備中です。それまでは [`flatpak/`](flatpak/RE
 brew install --cask efg-technologies/zeed/zeed
 ```
 
-または[最新リリース](https://github.com/efg-technologies/zeed-browser-dist/releases/latest)
-から署名・公証済みの `.dmg` をダウンロードしてください。
+または、macOS ビルドを含む最新のリリースである
+[v147.0.7727.55.56](https://github.com/efg-technologies/zeed-browser-dist/releases/tag/v147.0.7727.55.56)
+から署名・公証済みの `.dmg` をダウンロードしてください (Linux 向けリリースの
+方が高頻度で出ています)。
 
 ## リポジトリの内容
 
@@ -62,6 +64,7 @@ brew install --cask efg-technologies/zeed/zeed
   メンテナスクリプト、デスクトップエントリ)。
 - `flatpak/` — Flathub 対応の Flatpak マニフェスト + AppStream メタデータ。
 - `.github/workflows/publish-aur.yml` — リリースごとに AUR を更新する CI。
+- `.github/workflows/publish-deb.yml` — `.deb` をビルドしてリリースに添付する CI。
 - Releases (上のタブ) — ビルド済み Linux tarball / `.deb` / macOS `.dmg`。
 
 ## リリースの流れ
@@ -71,7 +74,8 @@ brew install --cask efg-technologies/zeed/zeed
    (`./packaging/scripts/make-release-tarball.sh`)。
 3. メンテナが `gh release create vX.Y.Z dist/zeed-*.tar.xz* --repo efg-technologies/zeed-browser-dist` を実行。
 4. このリポジトリの `publish-aur.yml` が起動 → PKGBUILD の pkgver + sha256 を
-   更新して AUR へ push。
+   更新して AUR へ push。`publish-deb.yml` が `.deb` をビルドして同じリリースに
+   添付。
 
 このリポジトリにアプリケーションコードはありません。AUR ユーザーが GitHub
 認証なしでダウンロード URL を `curl` できるよう、公開バイナリ tarball を
