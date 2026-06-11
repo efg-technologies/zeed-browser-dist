@@ -49,8 +49,10 @@ extract, and run `./zeed`.
 brew install --cask efg-technologies/zeed/zeed
 ```
 
-Or download the signed + notarized `.dmg` from the
-[latest release](https://github.com/efg-technologies/zeed-browser-dist/releases/latest).
+Or download the signed + notarized `.dmg` from
+[v147.0.7727.55.56](https://github.com/efg-technologies/zeed-browser-dist/releases/tag/v147.0.7727.55.56),
+the latest release that includes a macOS build (Linux releases ship more
+frequently).
 
 ## What's here
 
@@ -61,6 +63,8 @@ Or download the signed + notarized `.dmg` from the
   desktop entry).
 - `flatpak/` — Flathub-ready Flatpak manifest + AppStream metadata.
 - `.github/workflows/publish-aur.yml` — CI that updates AUR on every release.
+- `.github/workflows/publish-deb.yml` — CI that builds the `.deb` and attaches
+  it to the release.
 - Releases (tab above) — prebuilt Linux tarballs, `.deb` packages, and macOS
   `.dmg` images.
 
@@ -71,6 +75,7 @@ Or download the signed + notarized `.dmg` from the
    (`./packaging/scripts/make-release-tarball.sh`).
 3. Maintainer runs `gh release create vX.Y.Z dist/zeed-*.tar.xz* --repo efg-technologies/zeed-browser-dist`.
 4. `publish-aur.yml` here fires → bumps PKGBUILD pkgver + sha256 + pushes to AUR.
+   `publish-deb.yml` builds the `.deb` and attaches it to the same release.
 
 No application code lives in this repo. It exists only to host public binary
 tarballs so that AUR users can `curl` the download URL without GitHub auth.
