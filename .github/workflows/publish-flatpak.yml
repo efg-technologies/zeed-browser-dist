@@ -1,0 +1,167 @@
+name: Sync Flatpak manifest
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to sync (e.g. 149.0.7827.102.58). Defaults to the latest release tag."
+        required: false
+
+# Same shape as publish-aur.yml / publish-deb.yml: react to a published
+# release (or manual dispatch), resolve the version, pull the SAME tarball
+# asset the AUR/deb pipelines consume, and update the packaging metadata to
+# match. Unlike AUR (pushes to the external AUR repo) and deb (uploads
+# release assets), the Flatpak manifest lives IN this repo, so the update
+# is delivered as a PR (main is protected; matches the manual
+# `sync/flatpak-*` + PR flow already used for prior version bumps).
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # create the sync branch
+      pull-requests: write  # open the PR
+    steps:
+      - name: Checkout dist repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ -n "${{ inputs.version }}" ]]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve release date
+        id: date
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VER: ${{ steps.version.outputs.version }}
+        run: |
+          # Prefer the release event's published_at; fall back to querying
+          # the release (workflow_dispatch path); last-resort: today (UTC).
+          rel_date="$(echo '${{ github.event.release.published_at }}' | cut -dT -f1)"
+          if [[ -z "$rel_date" ]]; then
+            rel_date="$(gh release view "v${VER}" --repo "$GITHUB_REPOSITORY" \
+                          --json publishedAt --jq '.publishedAt' 2>/dev/null \
+                        | cut -dT -f1)"
+          fi
+          if [[ -z "$rel_date" ]]; then
+            rel_date="$(date -u +%F)"
+          fi
+          echo "date=${rel_date}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute sha256 from the released tarball
+        id: sha
+        env:
+          VER: ${{ steps.version.outputs.version }}
+        run: |
+          # Same asset the AUR/deb pipelines consume. Download and hash it so
+          # the manifest sha256 can never drift from the real tarball — the
+          # Flatpak builder will refuse a mismatched archive anyway.
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VER}/zeed-${VER}-linux-x86_64.tar.xz"
+          echo "Downloading $url"
+          curl -sL --fail "$url" -o /tmp/zeed-flatpak.tar.xz || {
+            echo "::error::Failed to download $url"
+            exit 1
+          }
+          sha="$(sha256sum /tmp/zeed-flatpak.tar.xz | awk '{print $1}')"
+          echo "sha256=${sha}"
+          echo "sha256=${sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Flatpak manifest + metainfo
+        env:
+          VER:      ${{ steps.version.outputs.version }}
+          SHA:      ${{ steps.sha.outputs.sha256 }}
+          REL_DATE: ${{ steps.date.outputs.date }}
+        run: |
+          set -euo pipefail
+          yml="flatpak/run.zeed.Browser.yml"
+          meta="flatpak/run.zeed.Browser.metainfo.xml"
+
+          # 1) zeed module archive: bump url (the only releases/download
+          #    archive in the manifest) and the sha256 line beneath it.
+          sed -i -E \
+            "s#(url: https://github.com/${GITHUB_REPOSITORY}/releases/download/)v[0-9.]+/zeed-[0-9.]+-linux-x86_64\.tar\.xz#\1v${VER}/zeed-${VER}-linux-x86_64.tar.xz#" \
+            "$yml"
+          sed -i -E "s#^(        sha256: )[0-9a-f]{64}#\1${SHA}#" "$yml"
+
+          # 2) metainfo: prepend a <release> entry (idempotent).
+          if grep -q "release version=\"${VER}\"" "$meta"; then
+            echo "metainfo already has v${VER} — leaving as-is"
+          else
+            sed -i "s#  <releases>#  <releases>\n    <release version=\"${VER}\" date=\"${REL_DATE}\"/>#" "$meta"
+          fi
+
+          echo "=== diff ==="
+          git --no-pager diff -- "$yml" "$meta" || true
+
+      - name: Verify the manifest sha matches the tarball
+        env:
+          VER: ${{ steps.version.outputs.version }}
+          SHA: ${{ steps.sha.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          yml="flatpak/run.zeed.Browser.yml"
+          manifest_sha="$(awk '/^        sha256: /{print $2; exit}' "$yml")"
+          if [[ "$manifest_sha" != "$SHA" ]]; then
+            echo "::error::manifest sha256 ($manifest_sha) != tarball sha256 ($SHA)"
+            exit 1
+          fi
+          if ! grep -q "v${VER}/zeed-${VER}-linux-x86_64.tar.xz" "$yml"; then
+            echo "::error::manifest url was not updated to v${VER}"
+            exit 1
+          fi
+          echo "✓ manifest url + sha256 match the released v${VER} tarball"
+
+      - name: Open sync PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VER:      ${{ steps.version.outputs.version }}
+          SHA:      ${{ steps.sha.outputs.sha256 }}
+          REL_DATE: ${{ steps.date.outputs.date }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Flatpak manifest already at v${VER} — nothing to do"
+            exit 0
+          fi
+
+          branch="sync/flatpak-v${VER}"
+          git config user.name  "zeed-release-bot"
+          git config user.email "release@efg-technologies.com"
+          git checkout -B "$branch"
+          git add flatpak/run.zeed.Browser.yml flatpak/run.zeed.Browser.metainfo.xml
+          git commit -m "flatpak: sync manifest to v${VER}
+
+          Auto-synced by publish-flatpak.yml on release v${VER}.
+          - run.zeed.Browser.yml: bump zeed module archive url + sha256.
+            sha256 ${SHA} hashed from the released tarball (same asset the
+            AUR/deb pipelines consume).
+          - run.zeed.Browser.metainfo.xml: add v${VER} release entry (${REL_DATE}).
+
+          Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
+          git push -f origin "$branch"
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head "$branch" \
+            --title "flatpak: sync manifest to v${VER}" \
+            --body "Automated Flatpak manifest sync triggered by release \`v${VER}\`.
+
+          - \`flatpak/run.zeed.Browser.yml\`: zeed module archive url + sha256 bumped to v${VER}.
+          - \`flatpak/run.zeed.Browser.metainfo.xml\`: added \`<release version=\"${VER}\" date=\"${REL_DATE}\"/>\`.
+
+          sha256 \`${SHA}\` was hashed directly from the released tarball
+          (the same asset the AUR/deb pipelines consume) and re-verified by
+          the workflow, so it cannot drift from the real asset.
+
+          Generated by \`.github/workflows/publish-flatpak.yml\`." \
+            || echo "PR may already exist for $branch — skipping create"
