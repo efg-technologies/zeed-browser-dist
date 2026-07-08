@@ -1,0 +1,329 @@
+{
+  "_comment": "Canonical sha256 per release version. Once a version is published, its sha256 is immutable here. make-release-tarball.sh compares the freshly-built sha against this; if they differ, it fails with 'bump pkgver'. This prevents the scenario where CI silently updates AUR's sha256 while old users' makepkg caches still hold the old tarball.",
+  "releases": {
+    "147.0.7727.55": {
+      "sha256": "a09fda2bc4858ff825d1d356edb25cd9206173b0e3047edd2af6c8617928efb4",
+      "published_at": "2026-04-15"
+    },
+    "147.0.7727.55.1": {
+      "sha256": "b38168aaa2a4068d7d90fb43735807b275282d69abf5758c24507233dd5e965a",
+      "published_at": "2026-04-16",
+      "notes": "Patch: Zeed-purple input/button palette. Binary unchanged."
+    },
+    "147.0.7727.55.2": {
+      "sha256": "9478d71d5c6161b0efa58e72e888ffac6fdb1c17bb8af875dab0e4b3337fe1c6",
+      "published_at": "2026-04-18",
+      "notes": "P1: color theme, vertical tabs, AI intent classification, scope, context map stubs, memory stubs"
+    },
+    "147.0.7727.55.3": {
+      "sha256": "442b3cdba40f825075521f71a96ef516fdd4a62fcd6e04c13b860443cb43b9af",
+      "published_at": "2026-04-18",
+      "notes": "Memory + Context Map: real implementation (fact extraction, grounding injection)"
+    },
+    "147.0.7727.55.4": {
+      "sha256": "fecf7c57432e7fc574f8c4d93b7dc88873df1d35ed4bda0b0934349786c80a37",
+      "published_at": "2026-04-18",
+      "notes": "Sidebar UI rebuild: scope-crumb, 4-tab nav, Memory list, Context Map, mode switch"
+    },
+    "147.0.7727.55.5": {
+      "sha256": "ff9437f0b68cf175c759c282c91f5600db43f61176ce28066865528e6730010d",
+      "published_at": "2026-04-18",
+      "notes": "fix: sidebar not opening (showUI must be first call in ready)"
+    },
+    "147.0.7727.55.6": {
+      "sha256": "15b5b59ed4db8fb16e058ec4f570b2bb8d2ee4fd87c5f0e4851898ca85466b3e",
+      "published_at": "2026-04-19",
+      "notes": "Auto mode = agent loop with tools (removes classifyIntent mis-routing); Tasks pane wired (add/toggle/delete + agent add_task tool); Context Map fallback when LLM fails; memory list refresh after async fact extraction"
+    },
+    "147.0.7727.55.7": {
+      "sha256": "951083e227663de0fcccaf6c8b906790e932baaedcb0dc8967fd3fb2e4b51749",
+      "published_at": "2026-04-19",
+      "notes": "P2 #15/#16/#18/#19/#20: Tasks full (priority/due/reminder/tabgroup); Bookmarks pane (memo required + agent bookmark_page tool); RSS feed ingestion via new Mojo FetchUrl (+ parser for RSS 2.0/Atom 1.0); desktop notifications fire for due reminders (Notification API); Recommendations (top-3 related marks/feed items) on Chat pane. Skips #17 (Mobile)."
+    },
+    "147.0.7727.55.8": {
+      "sha256": "55582723c2f209a123fa19087ae8c8399b5279dc64421d8da972e92a5ea8d0d3",
+      "published_at": "2026-04-19",
+      "notes": "Data integration pass (Gaps 1-7): RSS/Bookmark auto-flow into Memory with origin tag; Context Map adds mark/feed lanes (4 sources, color-coded); Recommendations include memory-origin facts; TabGroup auto-stamp on new tasks/bookmarks/facts + scope toggle on crumb; Agent read tools (search_memory/list_tasks/list_bookmarks/list_feeds); Reminder edit UI (\u23f0 button per task). Stores are now genuinely interconnected \u2014 one data flywheel, not four silos."
+    },
+    "147.0.7727.55.9": {
+      "sha256": "cf251581e9629f7c0232b80214a4e7abdaefe01b37ca419adafad0fdfd6d54f3",
+      "published_at": "2026-04-19",
+      "notes": "Quick Action bar (6 buttons: Like/Bookmark/Task/Remind/Feed/Related act on current tab) + comprehensive Debug pane (store stats + dump to console + per-store reset + reset ALL) + [Zeed:*] console logging (enable via localStorage.zeed_debug='1'). Adds clear() methods to all stores for clean reset. Agent loop now logs every step incl. tool execution so stops/errors are diagnosable in DevTools. Feed sniff from page <link rel=\"alternate\" type=\"rss|atom\">."
+    },
+    "147.0.7727.55.10": {
+      "sha256": "72f2769e63000762773f95d26abbdca94abf52f4e02ab227fd06f9e88a1cf373",
+      "published_at": "2026-04-19",
+      "notes": "Keyboard shortcuts: Ctrl+Shift+S summarize current page, Ctrl+Shift+T translate current page, Ctrl/Alt+1/2/3 open Nth recommendation. @ alias popup in Chat input (type @ at start of word) with @tab (title+URL), @selection (highlighted text), @page (body summary). Each pastes a fenced block the LLM can parse."
+    },
+    "147.0.7727.55.11": {
+      "sha256": "c5029356e08ed58c3b9d586a358b9749f7ef9c2060e3933eaae783859a2b4541",
+      "published_at": "2026-04-19",
+      "notes": "CRITICAL FIX: replace ALL innerHTML assignments (16 call sites) with Trusted-Types-safe DOM APIs (replaceChildren + createElement + textContent). chrome:// WebUIs enforce Trusted Types and blocked every innerHTML write \u2014 that's why Memory/Map/Tasks/Feeds/Marks panes were stuck on their initial '\u30cf\u30ea\u30dc\u30c6' HTML and the Agent loop stopped mid-iteration when any tool handler triggered a re-render. Panes now actually render, Agent loop runs to completion."
+    },
+    "147.0.7727.55.12": {
+      "sha256": "fdabbb4d1e97ef352bd7ea86d3196e95825d5ac2d84245bafdaa8d1f07c16cff",
+      "published_at": "2026-04-19",
+      "notes": "CRITICAL FIX: crash on sidebar open. .11 unblocked the render paths, which meant refreshContextMap \u2192 getPageContent was actually reached, which called RenderFrameHost::ExecuteJavaScript on whatever active tab the user had. If the active tab was chrome:// (new tab / settings / devtools / zeed-sidebar itself), CanExecuteJavaScript() CHECK-failed and crashed the whole browser process. Added IsScriptableUrl() guard in GetPageContent + ExecuteScript: only http(s)/file proceed; chrome://, data:, about:, devtools:// return a soft placeholder without triggering the CHECK."
+    },
+    "147.0.7727.55.13": {
+      "sha256": "1329a650e49872b00b2b9125d598dd3575734d129d7a45f0c461215d8c40d4ea",
+      "published_at": "2026-04-19",
+      "notes": "fix: pipe-closed (Agent/getTabs), Tasks inline form, bookmark line icons"
+    },
+    "147.0.7727.55.14": {
+      "sha256": "f390e565cd9857e75bd6802cb101a286afb40dd66d22d27b7b4da866dbb7f0ee",
+      "published_at": "2026-04-19",
+      "notes": "fix: CHECK crash on GetPageContent \u2014 add frame-level WebUI/bindings guard"
+    },
+    "147.0.7727.55.15": {
+      "sha256": "df7fc230a69c435dbbbdee956fb3ffd5753b2594e493accbc9ed64536fedaf88",
+      "published_at": "2026-04-19",
+      "notes": "fix: use ExecuteJavaScriptInIsolatedWorld (CHECK-safe) + rename binary chrome->zeed"
+    },
+    "147.0.7727.55.16": {
+      "sha256": "f4adeac7a14dd5ac93e5bd7903b746174eca486d4f530d8673ef4593c610e7c4",
+      "published_at": "2026-04-19",
+      "notes": "CRITICAL: actually ship ExecuteJavaScriptInIsolatedWorld fix (prior releases compiled pre-fix due to missing chromium_src sync)"
+    },
+    "147.0.7727.55.18": {
+      "sha256": "05362aac382ee53225d1398dd2660dd8c861e8b85c9fba7e186b086f938abf9a",
+      "published_at": "2026-04-19",
+      "notes": "P2 fixes: Likes viewable, analysis caps, RSS parse hardening"
+    },
+    "147.0.7727.55.19": {
+      "sha256": "0ececdcd95adc3b950922ff235559356e6d3e1da60ac9a4442a2ba0de0429141",
+      "published_at": "2026-04-19",
+      "notes": "agent pivot + bookmark fix + chat-embedded grounding + phased loading"
+    },
+    "147.0.7727.55.20": {
+      "sha256": "56e06af327efa08a9df6395ad79e514a4295872fd31abb4eaa57f518c64b9215",
+      "published_at": "2026-04-19",
+      "notes": "left-align system/tool bubbles + MAX_STEPS=30 + forbid URL guess + bookmark status visibility"
+    },
+    "147.0.7727.55.21": {
+      "sha256": "01f6b23c752a04aab84b66978f581da8f4d9f84b030660fcab36b84a8767bbcb",
+      "published_at": "2026-04-19",
+      "notes": "agent stop+queue + read_page LINKS block + SPA guidance"
+    },
+    "147.0.7727.55.22": {
+      "sha256": "a5fde27ecf24aff160f9c5c2b1e22c410dbc28d6d5469ac247ea233b18e42474",
+      "published_at": "2026-04-19",
+      "notes": "agent: scroll tool + read_page retry + SERP delay 3s"
+    },
+    "147.0.7727.55.23": {
+      "sha256": "ccccaec44c159eca03c3a1cab12c5b05a160f599346c3ed7ee6864c63f6a74b5",
+      "published_at": "2026-04-19",
+      "notes": "debug version badge + read_page slice 5k\u219216k + release.sh auto-stamps ZEED_VERSION"
+    },
+    "147.0.7727.55.24": {
+      "sha256": "d3ed9c354529e30f5b63277bec8deaec31220dce464de780e2e957dd5a6903a5",
+      "published_at": "2026-04-19",
+      "notes": "chat context + tool parse + debug toggle + dump"
+    },
+    "147.0.7727.55.25": {
+      "sha256": "cd4803bf83f78a42da2c6ac95977e5e065e6de1f413422fd07b68ad1e6f13f0a",
+      "published_at": "2026-04-19",
+      "notes": "markdown rendering in chat (Trusted-Types-safe)"
+    },
+    "147.0.7727.55.26": {
+      "sha256": "cbbff918a47f2061ac60ec3dacba6c6b61b3699f73b28f21daeb5107d7650da1",
+      "published_at": "2026-04-19",
+      "notes": "new-session UX + per-message mode badge"
+    },
+    "147.0.7727.55.27": {
+      "sha256": "0b99b3b4c2ecf81a0721c510f567efa2fc82434768987c0c5c041faa269ca763",
+      "published_at": "2026-04-19",
+      "notes": "agent: wait at dialogs + do not claim missing when TEXT has content"
+    },
+    "147.0.7727.55.28": {
+      "sha256": "2933fdf203ca6db2266c58dbab343999ffad4ca871ae78657103952546254aac",
+      "published_at": "2026-04-19",
+      "notes": "feed parser: entity normalization + text/html fallback"
+    },
+    "147.0.7727.55.29": {
+      "sha256": "5b8c542730f2b46e0ab00a6e0abf3f6d357501e0179648a0b410e2be349cecb8",
+      "published_at": "2026-04-20",
+      "notes": "phase1 #32 keyword highlight"
+    },
+    "147.0.7727.55.30": {
+      "sha256": "854dbc91fa06958ad78e474271efaf38a01866035de4d9950bab53bfe1c2a75b",
+      "published_at": "2026-04-20",
+      "notes": "phase1 #33 shortcuts + command palette + cleanup"
+    },
+    "147.0.7727.55.31": {
+      "sha256": "098e617ad2e17eb2a753fa53195e4d21f0aa6a2de3018a9a4d9e43ab0de07e9c",
+      "published_at": "2026-04-20",
+      "notes": "phase1 #33 v2 \u2014 Insert/Normal + case-based + presets + settings"
+    },
+    "147.0.7727.55.32": {
+      "sha256": "a3c742b1e5ad4cd4f14581ef572dd7003347ac3713a377ac06e26799cb2ecf77",
+      "published_at": "2026-04-20",
+      "notes": "#32 Phase B context-map grounded highlight"
+    },
+    "147.0.7727.55.33": {
+      "sha256": "200f4becc653609e14fedc7520e30c0e9b736dccca1f6ba55a4c0319688d94a3",
+      "published_at": "2026-04-20",
+      "notes": "phase1 #12 day1 \u2014 TF-IDF hybrid retrieval"
+    },
+    "147.0.7727.55.34": {
+      "sha256": "ba485e8beb972d20145980ea53ea269c8987d997ea3152f0b243dc95c3415c05",
+      "published_at": "2026-04-20",
+      "notes": "break scroll-read_page loop + Up arrow history"
+    },
+    "147.0.7727.55.35": {
+      "sha256": "ac66b2ccdb865d48633b2246c5ce994a3a32aa7640147569252ef6238dfece7e",
+      "published_at": "2026-04-20",
+      "notes": "context map: 3-layer hierarchy (profile/tabgroup/tab/topic/memory)"
+    },
+    "147.0.7727.55.36": {
+      "sha256": "dc3d74ea045cd16b7cf81c612015ea436faf472fccca7c0d6943edf89c27b6c8",
+      "published_at": "2026-04-20",
+      "notes": "relocate new-conversation button next to Context toggle"
+    },
+    "147.0.7727.55.37": {
+      "sha256": "fcf0778f5cf084df198322f03208107f20711a02535f067042ed198e010bdefd",
+      "published_at": "2026-04-20",
+      "notes": "AI plan flash + progress diagram + context stack"
+    },
+    "147.0.7727.55.38": {
+      "sha256": "37f2632d270b159f001e01e762930db18f442ab6683eb2181977c062e53e0c3c",
+      "published_at": "2026-04-20",
+      "notes": "telemetry: client scaffolding (opt-in default OFF)"
+    },
+    "147.0.7727.55.39": {
+      "sha256": "8b5c93322d267c2ffc521a73bc78bfefdacb35cd96c5e517ec2e1fb4eed0b8dd",
+      "published_at": "2026-04-20",
+      "notes": "agent retry when action declared without tool fence"
+    },
+    "147.0.7727.55.40": {
+      "sha256": "393ab8d10129d968f81654a5f097f0fee50b349a49be4f6e3ad458b16ecac308",
+      "published_at": "2026-04-20",
+      "notes": "agent: anchor first user msg as THREAD GOAL in system prompt"
+    },
+    "147.0.7727.55.41": {
+      "sha256": "bc2ea488a4d47a5b8c61fb119c8806a72905c0e7e45d2f788afdea03a957cd1d",
+      "published_at": "2026-04-20",
+      "notes": "phase2 #23 \u2014 prompt injection defense (untrusted wrap)"
+    },
+    "147.0.7727.55.42": {
+      "sha256": "6378d54a7b494d6dcc8d17cda8872c3e0e13df53f442a8d1c99951fd56cc8008",
+      "published_at": "2026-04-20",
+      "notes": "phase2 #24 \u2014 private mode (AI off, no recording)"
+    },
+    "147.0.7727.55.43": {
+      "sha256": "0c4cbf8cec0056a73f3708fb6d2f5e3891848d687ad7bbf76108f82ab7e07227",
+      "published_at": "2026-04-20",
+      "notes": "phase2 #28 \u2014 sensitive action confirmation (code-level gate)"
+    },
+    "147.0.7727.55.44": {
+      "sha256": "9a46bf1e774662f033160fa18930faa9577427f479422c5cc8a5c170c29bdb72",
+      "published_at": "2026-04-20",
+      "notes": "telemetry: wire live Cloudflare Worker endpoint"
+    },
+    "147.0.7727.55.45": {
+      "sha256": "12410f6af84b74d38afc0657d07c03a81b726a6ae062463f512d774b2d8e03af",
+      "published_at": "2026-04-20",
+      "notes": "Phase 1 \u5b8c\u9042: RSS regex fallback / highlight serialize + Mojo reconnect / TDD infra / Chromium auto-bump / MCP Connector (HTTP) / SearchProvider interface + BM25"
+    },
+    "147.0.7727.55.46": {
+      "sha256": "c290fc23238e9ba8497a03bfaea09a76ba4d3d4bc9ac6e17c1985b9dad9549ca",
+      "published_at": "2026-04-21",
+      "notes": "v.45 fixes: empty pill / bookmark / RSS / MCP token"
+    },
+    "147.0.7727.55.47": {
+      "sha256": "476ad36059dd0cb8a6bc8b0d5ca3ce112b39d908beb94fbb42b4dca196ce7e0b",
+      "published_at": "2026-04-21",
+      "notes": "Agent search tool switched from Google SERP scraping to OpenRouter web_search plugin (structured SearchResult[] with URL+title+snippet). TDD 67 tests green."
+    },
+    "147.0.7727.55.48": {
+      "sha256": "28bd1a3e628823a797adc502c02a13fceaafdeecd660f5a2592e535ef4b2ed25",
+      "published_at": "2026-04-22",
+      "notes": "telemetry 3-tier + Mojo transport + Perplexity sonar for search + privacy-first dashboard"
+    },
+    "147.0.7727.55.49": {
+      "sha256": "94248e553cd4f8c279a2f983abceba4f5e5542bf7a1cba069b50a4964c30c0e0",
+      "published_at": "2026-04-24",
+      "notes": "sidebar: @tab now attaches page body + arrow-key popup nav"
+    },
+    "147.0.7727.55.50": {
+      "sha256": "2550166b7907a015e3a0fb2563981b73826080013ace92c192fd127a511b82a3",
+      "published_at": "2026-04-28",
+      "notes": "perf(sidebar): debounce ContextMap rebuild on tab switch (1s) \u2014 rapid tab/PWA swipes no longer fire one LLM call per change"
+    },
+    "147.0.7727.55.51": {
+      "sha256": "0df74db2627b4962c3c016354b623c0a2769ae58305f3e7997f3d9207c49be77",
+      "published_at": "2026-04-29",
+      "notes": "sidebar UX polish: Memory pane LRU cap @ 100 (priority+recency); ContextMap canvas single-click on memory nodes navigates the active tab (cmd/ctrl new tab, shift toggles selection); 2-line label wrap so titles aren't cut to single ellipsis"
+    },
+    "147.0.7727.55.53": {
+      "sha256": "95670579d38a7e17bfc91a30b3afe181dab319171bcd7453c229908b44ad4c86",
+      "published_at": "2026-06-08",
+      "notes": "sidebar design system v0 (Origami Minimal tokens \u2014 deep purple accent, single-line declarations, --zeed-* CSS vars); Fly graceful SSE shutdown to prevent browser tab freeze on rolling restart"
+    },
+    "147.0.7727.55.54": {
+      "sha256": "bde253a5e978ccd171980d33fc9cc7dcbd005e3ea7b5765c315d93efe28de686",
+      "published_at": "2026-06-10",
+      "notes": "first-run coach + sidebar perf fixes (Context Map leak / RAF loop / poll guard)"
+    },
+    "147.0.7727.55.55": {
+      "sha256": "229ae4f463656dbebcc8d636d94b4fac0547bc006b57ef2967ac5aef142c9ce7",
+      "published_at": "2026-06-11",
+      "notes": "sidebar DS token unification (Origami Minimal --zeed-* vars) + image right-click search \u300cZeed Search \u3067\u753b\u50cf\u3092\u691c\u7d22\u300d"
+    },
+    "147.0.7727.55.56": {
+      "sha256": "3da780e7f4a7af5d17ceb646cc8d6ccfcac4bb262b5272e4cacf4b7a5a93eedb",
+      "published_at": "2026-06-11",
+      "notes": "Mac sidebar freeze fix: LLM timeout 180s + failed-turn history rollback (zeed-core#64)"
+    },
+    "149.0.7827.102.57": {
+      "sha256": "f2067f7996beb2d9f8a3cee570e2f9142cfaac07b656c19f3e5871fb03991809",
+      "published_at": "2026-06-12",
+      "notes": "\u521d\u306e Chromium 149 \u30d9\u30fc\u30b9 + sidebar \u5168\u9762\u5237\u65b0 + Page Watch + dark NTP"
+    },
+    "149.0.7827.102.58": {
+      "sha256": "082eae0bcd90f03c54969c40d06faf30a4fa34b8f7bd7c93480ff4af19175a75",
+      "published_at": "2026-06-13",
+      "notes": "LLM \u30c1\u30e3\u30c3\u30c8\u9010\u6b21\u8868\u793a (streaming) + Stop \u5373\u6642 + \u691c\u7d22\u30b3\u30b9\u30c8\u7d04 25% \u524a\u6e1b + \u30da\u30fc\u30b8\u76e3\u8996\u6761\u4ef6\u4ed8\u304d\u901a\u77e5 + W7 \u30ea\u30c6\u30f3\u30b7\u30e7\u30f3\u8a08\u6e2c + \u65e7\u30b5\u30a4\u30c9\u30d0\u30fc\u62e1\u5f35\u6383\u9664 (-4000 \u884c)"
+    },
+    "149.0.7827.102.59": {
+      "sha256": "b859109178df85ab35274471730a78b36881231c5020f2f39291e5df434c6bfb",
+      "published_at": "2026-06-15",
+      "notes": "UI: \u6b8b\u3063\u3066\u3044\u305f Google blue \u3092 Zeed \u306b\u7d71\u4e00 (\u30bf\u30d6\u30d0\u30fc\u306e + \u30dc\u30bf\u30f3 / \u30a2\u30c9\u30ec\u30b9\u30d0\u30fc\u306e\u7e01) \u2014 lab#184"
+    },
+    "149.0.7827.102.60": {
+      "sha256": "4ff8c3ef24210140c5ad734b875738f66e25b730eee7b3983b1d35ff8c569360",
+      "published_at": "2026-06-15",
+      "notes": "KG P1: Browser \u306e\u89b3\u6e2c\u3092\u500b\u4eba\u30ca\u30ec\u30c3\u30b8\u30b0\u30e9\u30d5 (KnowledgeAtom) \u306b\u8a18\u9332\u3057 Mind \u3067\u300c\u79c1 \u77e5\u3063\u3066\u308b\u300d\u306b\u6607\u683c + \u5b9f LLM \u6d88\u5316\u3002consent \u65e2\u5b9a false \u3067\u30b0\u30e9\u30d5\u306f\u30e6\u30fc\u30b6\u30fc\u6240\u6709\u3002Sentry DSN transport (DSN \u672a\u8a2d\u5b9a\u3067\u306f no-op)\u3002"
+    },
+    "149.0.7827.200.61": {
+      "sha256": "37d9bd6437f8825c9c95dc8d671e61804907a5e1733da9a946a28f5cd218f1f7",
+      "published_at": "2026-07-02",
+      "notes": "Chromium 149.0.7827.200 / sidebar \u30e1\u30e2\u30ea\u52b9\u7387\u6539\u5584 (canvas \u518d\u5229\u7528\u30fb\u975e\u8868\u793a\u6642\u30dd\u30fc\u30ea\u30f3\u30b0\u505c\u6b62) / Page Watch \u5229\u7528\u8a08\u6e2c"
+    },
+    "150.0.7871.46.62": {
+      "sha256": "7132d46d35c21d19a56d64436854ae407f03d29580f61c2374c74ed4f592b6da",
+      "published_at": "2026-07-03",
+      "notes": "Chromium 150 / Linux \u66f4\u65b0\u901a\u77e5 (\u65b0\u30ea\u30ea\u30fc\u30b9\u691c\u77e5\u3067\u66f4\u65b0\u30c9\u30c3\u30c8) / ContextMap \u56fa\u5b9a\u914d\u7f6e"
+    },
+    "150.0.7871.46.63": {
+      "sha256": "7a97a99e20742afe842c8d4badf4badd83bd52227afe2ab5bcc02c6d79c30023",
+      "published_at": "2026-07-04",
+      "notes": "\u4eca\u65e5\u306e\u5168\u30de\u30fc\u30b8: \u30af\u30ed\u30b9\u30aa\u30ea\u30b8\u30f3 exfil \u9632\u5fa1(#403) / \u500b\u4eba\u30c7\u30fc\u30bf exfil \u30b2\u30fc\u30c8(#402) / \u5360\u6709\u30bf\u30d6\u9694\u96e2+\u5b89\u5b9a\u30cf\u30f3\u30c9\u30eb(#396/#425) / abort \u5185\u8a33\u8a08\u88c5(#390) / human handoff(#393) / skill \u30ad\u30e3\u30c3\u30b7\u30e5(#395) / PC \u65b0\u898f\u30bf\u30d6 RSS(#150) / \u30da\u30fc\u30b8\u8868\u73fe Markdown \u5316(#394) / AI \u63a5\u7d9a\u30c8\u30b0\u30eb(#407) / MCP \u516c\u958b(zeed-mcp)"
+    },
+    "150.0.7871.46.64": {
+      "sha256": "45ccadc7b78d29f4c0ede300a318062f3567f1f4aa68086504e2b9b14480a488",
+      "published_at": "2026-07-04",
+      "notes": "P0: fix M150 startup SEGV (pinned sidebar action order)"
+    },
+    "150.0.7871.46.65": {
+      "sha256": "cca3caa8d73891f5a7d69642474c18dcb662326b7eddfa0bd61edb22dccbbda6",
+      "published_at": "2026-07-05",
+      "notes": "P0 fix: M150 startup crashes - toolbar SEGV and NTP unregistered-pref abort, am5 verified"
+    },
+    "150.0.7871.46.66": {
+      "sha256": "9e5b97e778a6286fcfd8034257c88825aef1c21cd76b3fd24efe723e632ace81",
+      "published_at": "2026-07-08",
+      "notes": "fix: ServiceWorker SIGSEGV crash loop (contextMenus resource NOTREACHED downgraded to non-fatal)"
+    }
+  }
+}
