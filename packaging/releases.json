@@ -324,6 +324,11 @@
       "sha256": "9e5b97e778a6286fcfd8034257c88825aef1c21cd76b3fd24efe723e632ace81",
       "published_at": "2026-07-08",
       "notes": "fix: ServiceWorker SIGSEGV crash loop (contextMenus resource NOTREACHED downgraded to non-fatal)"
+    },
+    "150.0.7871.46.67": {
+      "sha256": "c3238bd66606e00c9e00eb759353f98025d1a0438eb2cd48700a37022107ee7c",
+      "published_at": "2026-07-10",
+      "notes": "Linux build: fixes context_menus / web_request_event bindings (1Password SW crash), completes cross-platform .67"
     }
   }
 }
