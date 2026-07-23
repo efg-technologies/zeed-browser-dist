@@ -85,4 +85,4 @@ tarballs so that AUR users can `curl` the download URL without GitHub auth.
 - Website: [zeed.run](https://zeed.run)
 - AUR: [zeed-bin](https://aur.archlinux.org/packages/zeed-bin)
 - Homebrew tap: [efg-technologies/homebrew-zeed](https://github.com/efg-technologies/homebrew-zeed)
-- Built by [EFG Technologies Inc.](https://zeed.run) (Tokyo, Japan)
+- Built by [EFG technologies](https://efg-technologies.com) (Tokyo, Japan)
