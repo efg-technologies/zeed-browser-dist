@@ -86,4 +86,4 @@ brew install --cask efg-technologies/zeed/zeed
 - 公式サイト: [zeed.run](https://zeed.run)
 - AUR: [zeed-bin](https://aur.archlinux.org/packages/zeed-bin)
 - Homebrew tap: [efg-technologies/homebrew-zeed](https://github.com/efg-technologies/homebrew-zeed)
-- 開発・配布: [EFG technologies](https://efg-technologies.com) (東京)
+- 開発・配布: [株式会社EFG technologies](https://efg-technologies.com) (東京)
