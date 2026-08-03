@@ -3,7 +3,7 @@
   <id>run.zeed.Browser</id>
   <launchable type="desktop-id">run.zeed.Browser.desktop</launchable>
   <name>Zeed Browser</name>
-  <summary>Browse the web with a bundled AI assistant</summary>
+  <summary>AI browser that remembers what you read</summary>
   <developer id="com.efg-technologies">
     <name>EFG Technologies</name>
   </developer>

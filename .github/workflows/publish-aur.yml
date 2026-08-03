@@ -132,14 +132,24 @@ jobs:
           chmod 644 /tmp/staging/*
           chown -R builder:builder /tmp/staging
 
-      - name: Push to AUR (as builder)
+      - name: Push to AUR (as builder, with retry)
         # Clone the AUR repo, force-checkout master (clone often lands in
         # detached HEAD — this is the exact bug the KSXGitHub action
         # couldn't handle). Swap in the staged files, run updpkgsums to
         # refresh the sha from the actually-uploaded tarball, regenerate
         # .SRCINFO, commit on master, push.
+        #
+        # Wrapped in an exponential-backoff retry (max 6 attempts, ~17min
+        # worst case) because AUR has transient "down for maintenance"
+        # windows that clear on their own within tens of minutes — this
+        # bit twice in a month (2026-07-09, 2026-08-03: 3 consecutive
+        # failures) with nobody noticing until a human re-dispatched by
+        # hand. See marketing/audits/2026-08-03-aur-audit.md V-1/K-5.
         run: |
-          sudo -u builder -i bash <<'BUILDER_EOF'
+          max_attempts=6
+          base_delay=60   # seconds; doubles each attempt, capped at 300s
+          attempt=1
+          until sudo -u builder -i bash <<'BUILDER_EOF'
           set -euo pipefail
           cd /tmp
           rm -rf aur-repo
@@ -168,3 +178,50 @@ jobs:
               commit -m "Release ${pkgver}-${pkgrel}"
           git push origin master
           BUILDER_EOF
+          do
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "::error::AUR push failed after ${attempt} attempts — giving up"
+              exit 1
+            fi
+            delay=$(( base_delay * (2 ** (attempt - 1)) ))
+            [ "$delay" -gt 300 ] && delay=300
+            echo "::warning::AUR push attempt ${attempt}/${max_attempts} failed (likely AUR maintenance window) — retrying in ${delay}s"
+            sleep "$delay"
+            attempt=$(( attempt + 1 ))
+          done
+
+      - name: Report failure to Cockpit blocker
+        # Final-failure detection (marketing/audits/2026-08-03-aur-audit.md
+        # K-6 / V-2): the 2026-08-03 3x failure and the 2026-07-09 failure
+        # both went unnoticed until someone happened to check the AUR page.
+        # After every retry above is exhausted, register a blocker via the
+        # same contract as ops/scripts/blocker-notify.mjs (lab repo) so it
+        # surfaces in Cockpit instead of silently rotting. Best-effort: a
+        # missing TELEMETRY_READ_TOKEN secret only warns, never fails the
+        # job further (this step must not mask the real failure above).
+        if: failure()
+        env:
+          TELEMETRY_READ_TOKEN: ${{ secrets.TELEMETRY_READ_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "${TELEMETRY_READ_TOKEN:-}" ]; then
+            echo "::warning::TELEMETRY_READ_TOKEN secret not set on this repo — skipping Cockpit blocker registration (see marketing/audits/2026-08-03-aur-audit.md K-6)"
+            exit 0
+          fi
+          payload=$(printf '{"blocker_id":"aur-publish-failed","title":"AUR publish failed (zeed-bin %s)","detail":"publish-aur.yml exhausted all retries. Run: %s","answer_kind":"manual","source":"github","issue_urls":["%s"]}' \
+            "${VERSION:-unknown}" "$RUN_URL" "$RUN_URL")
+          for i in 1 2 3; do
+            status=$(curl -sS -o /tmp/blocker-resp.txt -w '%{http_code}' \
+              -X POST "https://zeed-telemetry.efg-technologies.workers.dev/v1/blockers" \
+              -H "Authorization: Bearer ${TELEMETRY_READ_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$payload" || echo "000")
+            if [ "$status" = "200" ] || [ "$status" = "201" ]; then
+              echo "Cockpit blocker registered (aur-publish-failed)"
+              exit 0
+            fi
+            echo "blocker upsert attempt ${i} failed (status=${status}): $(cat /tmp/blocker-resp.txt 2>/dev/null)"
+            sleep $(( i * 5 ))
+          done
+          echo "::warning::Failed to register Cockpit blocker after 3 attempts — publish failure still stands above"

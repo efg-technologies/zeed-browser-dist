@@ -2,12 +2,13 @@
 Version=1.0
 Name=Zeed Browser
 GenericName=Web Browser
-Comment=AI browser that thinks and acts with you
+Comment=AI browser that remembers what you read
 Exec=/usr/bin/zeed %U
 Terminal=false
 Icon=zeed-browser
 Type=Application
 Categories=Network;WebBrowser;
+Keywords=ai;browser;chromium;reader;rss;llm;privacy;linux;read;memory;
 MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
 StartupNotify=true
 StartupWMClass=Zeed
