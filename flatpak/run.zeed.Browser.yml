@@ -67,8 +67,8 @@ modules:
       # run.zeed.Browser.metainfo.xml. sha256 must match the value the AUR
       # pipeline verified (packaging/aur/PKGBUILD sha256sums_x86_64).
       - type: archive
-        url: https://github.com/efg-technologies/zeed-browser-dist/releases/download/v149.0.7827.102.58/zeed-149.0.7827.102.58-linux-x86_64.tar.xz
-        sha256: 082eae0bcd90f03c54969c40d06faf30a4fa34b8f7bd7c93480ff4af19175a75
+        url: https://github.com/efg-technologies/zeed-browser-dist/releases/download/v150.0.7871.46.64/zeed-150.0.7871.46.64-linux-x86_64.tar.xz
+        sha256: 45ccadc7b78d29f4c0ede300a318062f3567f1f4aa68086504e2b9b14480a488
         dest: browser
         only-arches: [x86_64]
       - type: file
