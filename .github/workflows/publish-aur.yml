@@ -36,7 +36,7 @@ jobs:
           chmod 440 /etc/sudoers.d/builder
 
       - name: Checkout dist repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 

@@ -20,7 +20,7 @@ jobs:
       contents: write   # needed to upload assets to the release
     steps:
       - name: Checkout dist repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install build deps
         run: |
